@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { ChevronRight, User, Bell, Palette, Info, LogOut, Calendar, Briefcase, Target, Mail, Camera } from 'lucide-react';
+import { ChevronRight, User, Bell, Palette, Info, LogOut, Calendar, Briefcase, Target, Mail, Camera, BarChart2, MessageSquare } from 'lucide-react';
 import { LogoMini } from '../../components/Logo';
 import { useNavigate } from 'react-router';
 import { DesktopPageHeader } from '../DesktopUI';
 import { AvatarModal } from '../../components/AvatarModal';
+import { FeedbackModal } from '../../components/FeedbackModal';
 import type { UserData } from '../../hooks/accountStore';
 
 interface DesktopSettingsProps {
@@ -37,6 +38,8 @@ const settingsGroups = [
 export function DesktopSettings({ userData, onLogout, onUpdateUserData }: DesktopSettingsProps) {
   const navigate = useNavigate();
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const isDeveloper = !!userData.isDeveloper;
 
   const initials = userData.name
     ? userData.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
@@ -160,6 +163,51 @@ export function DesktopSettings({ userData, onLogout, onUpdateUserData }: Deskto
               </div>
             </div>
           ))}
+
+          {/* Mục nhà phát triển */}
+          {isDeveloper && (
+            <div>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 px-1">Nhà phát triển</p>
+              <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+                <button
+                  onClick={() => navigate('/dev/feedbacks')}
+                  className="w-full flex items-center gap-4 px-4 py-4 hover:bg-gray-50 transition-colors"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-indigo-500 flex items-center justify-center flex-shrink-0">
+                    <BarChart2 className="w-[18px] h-[18px] text-white" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-bold text-gray-800">Phản hồi người dùng</p>
+                    <p className="text-xs text-gray-400 mt-0.5">Tổng hợp & đọc phản hồi</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-gray-300" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Nút phản hồi cho user thường */}
+          {!isDeveloper && (
+            <div>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 px-1">Phản hồi</p>
+              <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+                <button
+                  onClick={() => setIsFeedbackOpen(true)}
+                  className="w-full flex items-center gap-4 px-4 py-4 hover:bg-gray-50 transition-colors"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-blue-500 flex items-center justify-center flex-shrink-0">
+                    <MessageSquare className="w-[18px] h-[18px] text-white" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-bold text-gray-800">Gửi phản hồi</p>
+                    <p className="text-xs text-gray-400 mt-0.5">Chia sẻ cảm nhận về DayTrack</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-gray-300" />
+                </button>
+              </div>
+            </div>
+          )}
+
           <p className="text-center text-xs text-gray-400 font-medium">DayTrack v1.0.0</p>
         </div>
       </div>
@@ -170,6 +218,12 @@ export function DesktopSettings({ userData, onLogout, onUpdateUserData }: Deskto
         currentAvatar={userData.avatar}
         userName={userData.name}
         onSaveAvatar={handleSaveAvatar}
+      />
+
+      <FeedbackModal
+        isOpen={isFeedbackOpen}
+        onClose={() => setIsFeedbackOpen(false)}
+        userData={userData}
       />
     </div>
   );

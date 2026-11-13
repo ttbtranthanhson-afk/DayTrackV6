@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { Clock, Apple, Dumbbell, BookOpen, Info, Loader2, RefreshCw, AlertCircle } from 'lucide-react';
-import { suggestForBlock, type AiSuggestion } from '../services/gemini';
+import { suggestForBlock } from '../services/gemini';
+import type { AiSuggestion } from '../../../shared/ai';
 
 interface AIScheduleSuggestionProps {
   scheduleTitle: string;
@@ -102,14 +103,14 @@ export function AIScheduleSuggestion({ scheduleTitle, scheduleTime, day = '', ta
               <h4 className="font-medium text-gray-800">{data.title}</h4>
             </div>
 
-            {data.sections.map((section, index) => (
+            {data.sections.map((section: { heading: string; items: string[] }, index: number) => (
               <div
                 key={index}
                 className={`rounded-xl p-3 ${index === 0 ? meta.bg : 'bg-blue-50'}`}
               >
                 <p className="text-sm font-medium text-gray-800 mb-2">{section.heading}</p>
                 <ul className="space-y-1 text-sm text-gray-700">
-                  {section.items.map((item, i) => (
+                  {section.items.map((item: string, i: number) => (
                     <li key={i}>• {item}</li>
                   ))}
                 </ul>

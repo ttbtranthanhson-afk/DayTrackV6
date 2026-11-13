@@ -4,6 +4,7 @@ import { loadSettings, type NotificationSettings } from './notificationSettings'
 import { notify, parseClock, requestPermission } from './notificationService';
 import { dayNameFromDate } from './scheduleData';
 import { launchFocus } from './focusLauncher';
+import { formatDateKey, mondayFirstWeekday } from './dateUtils';
 
 const LOG_KEY = 'daytrack_notif_log';
 const TICK_MS = 20000;
@@ -18,11 +19,11 @@ interface ParsedBlock {
 }
 
 function todayKey(date: Date): string {
-  return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+  return formatDateKey(date);
 }
 
 function weekdayIndex(date: Date): number {
-  return date.getDay() === 0 ? 6 : date.getDay() - 1;
+  return mondayFirstWeekday(date);
 }
 
 function tsAt(minutesOfDay: number, now: Date): number {
@@ -120,7 +121,9 @@ export function useNotificationScheduler() {
       const now = new Date();
       const key = todayKey(now);
       const weekday = weekdayIndex(now);
-      const log = readLog().filter(k => !k.startsWith(key + ':'));
+
+      // Giữ CHỈ các entry của hôm nay để dedup; loại bỏ entry ngày cũ (prune).
+      const log = readLog().filter(k => k.startsWith(key + ':'));
       const fired = (k: string) => log.includes(k);
       const mark = (k: string) => {
         log.push(k);

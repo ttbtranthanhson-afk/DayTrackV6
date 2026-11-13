@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { ChevronRight, User, Bell, Palette, Info, LogOut, Calendar, Briefcase, Target, Mail, Camera } from 'lucide-react';
+import { ChevronRight, User, Bell, Palette, Info, LogOut, Calendar, Briefcase, Target, Mail, Camera, MessageSquare, BarChart2 } from 'lucide-react';
 import { LogoMini } from '../components/Logo';
 import { useNavigate } from 'react-router';
 import { AvatarModal } from '../components/AvatarModal';
+import { FeedbackModal } from '../components/FeedbackModal';
 import type { UserData } from '../hooks/accountStore';
 
 interface SettingsProps {
@@ -36,6 +37,8 @@ const settingsGroups = [
 export function Settings({ userData, onLogout, onUpdateUserData }: SettingsProps) {
   const navigate = useNavigate();
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const isDeveloper = !!userData.isDeveloper;
 
   const handleLogout = () => {
     onLogout();
@@ -157,6 +160,30 @@ export function Settings({ userData, onLogout, onUpdateUserData }: SettingsProps
             </div>
           ))}
 
+          {/* Mục nhà phát triển — chỉ hiện khi đăng nhập tài khoản dev */}
+          {isDeveloper && (
+            <div>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 px-1">
+                Nhà phát triển
+              </p>
+              <div className="bg-white rounded-2xl overflow-hidden divide-y divide-gray-50">
+                <button
+                  onClick={() => navigate('/dev/feedbacks')}
+                  className="w-full flex items-center gap-4 px-4 py-4 hover:bg-gray-50 transition-colors"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-indigo-500 flex items-center justify-center flex-shrink-0">
+                    <BarChart2 className="w-[18px] h-[18px] text-white" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-bold text-gray-800">Phản hồi người dùng</p>
+                    <p className="text-xs text-gray-400 mt-0.5">Tổng hợp & đọc phản hồi</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-gray-300" />
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Logout */}
           <div>
             <div className="bg-white rounded-2xl overflow-hidden">
@@ -183,6 +210,23 @@ export function Settings({ userData, onLogout, onUpdateUserData }: SettingsProps
         currentAvatar={userData.avatar}
         userName={userData.name}
         onSaveAvatar={handleSaveAvatar}
+      />
+
+      {/* Nút phản hồi nổi — ẩn với tài khoản dev */}
+      {!isDeveloper && (
+        <button
+          onClick={() => setIsFeedbackOpen(true)}
+          className="fixed bottom-24 right-5 w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl shadow-lg shadow-purple-200 flex items-center justify-center hover:scale-110 active:scale-95 transition-transform z-40"
+          title="Gửi phản hồi"
+        >
+          <MessageSquare className="w-5 h-5 text-white" />
+        </button>
+      )}
+
+      <FeedbackModal
+        isOpen={isFeedbackOpen}
+        onClose={() => setIsFeedbackOpen(false)}
+        userData={userData}
       />
     </div>
   );

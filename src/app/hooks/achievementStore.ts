@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import type { AchievementIdea } from '../../../shared/ai';
+import { todayDateKey } from './dateUtils';
 
 export interface AiAchievement {
   id: string;
@@ -79,8 +80,7 @@ export function useAchievements(): AiAchievement[] {
 }
 
 function todayKey(): string {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  return todayDateKey();
 }
 
 function isTaskDone(task: AchievementTask): boolean {

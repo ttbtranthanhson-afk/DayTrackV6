@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { formatDateKey, todayDateKey, getMonday, mondayFirstWeekday } from './dateUtils';
 
 export interface Task {
   id: string;
@@ -16,9 +17,9 @@ export interface Task {
 }
 
 export const priorityConfig = {
-  high:   { label: 'Ưu tiên cao',  bar: 'bg-rose-400',   badge: 'bg-rose-100 text-rose-600'   },
-  medium: { label: 'Ưu tiên vừa',  bar: 'bg-orange-400', badge: 'bg-orange-100 text-orange-600'},
-  low:    { label: 'Ưu tiên thấp', bar: 'bg-blue-400',   badge: 'bg-blue-100 text-blue-600'   },
+  high: { label: 'Ưu tiên cao', bar: 'bg-rose-400', badge: 'bg-rose-100 text-rose-600' },
+  medium: { label: 'Ưu tiên vừa', bar: 'bg-orange-400', badge: 'bg-orange-100 text-orange-600' },
+  low: { label: 'Ưu tiên thấp', bar: 'bg-blue-400', badge: 'bg-blue-100 text-blue-600' },
 };
 
 interface UseTasksProps {
@@ -40,16 +41,19 @@ export function useTasks({ tasks: propTasks, onUpdateTasks }: UseTasksProps) {
   const today = new Date();
   const dayNames = ['CN', 'Th 2', 'Th 3', 'Th 4', 'Th 5', 'Th 6', 'Th 7'];
   const todayStr = `${dayNames[today.getDay()]}, ${today.getDate()}/${today.getMonth() + 1}`;
-  const todayKey = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
-  const todayWeekday = today.getDay() === 0 ? 6 : today.getDay() - 1;
+  // Dùng helper zero-padded để khớp với achievementStore và notificationScheduler
+  const todayKey = todayDateKey();
+  const todayWeekday = mondayFirstWeekday(today);
 
+  // Dãy 7 ngày bắt đầu từ Thứ Hai, dùng getMonday để tránh lệch khi là Chủ Nhật
   const weekDays = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(today);
-    d.setDate(today.getDate() - today.getDay() + i + 1);
+    const monday = getMonday(today);
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
     return {
       date: d.getDate(),
-      dayShort: ['T2','T3','T4','T5','T6','T7','CN'][i],
-      isToday: d.toDateString() === today.toDateString(),
+      dayShort: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'][i],
+      isToday: formatDateKey(d) === todayKey,
     };
   });
 

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Background with rounded corners -->
+  <rect width="1024" height="1024" rx="220" ry="220" fill="#152744"/>
+
+  <!-- White checkmark -->
+  <path
+    d="M220 480 L420 700 L780 310"
+    stroke="white"
+    stroke-width="110"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    fill="none"
+  />
+
+  <!-- Orange dot -->
+  <circle cx="720" cy="260" r="95" fill="#F5A623"/>
+</svg>

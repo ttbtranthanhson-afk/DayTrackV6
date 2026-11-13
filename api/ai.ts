@@ -19,12 +19,25 @@ function json(status: number, body: unknown): Response {
   });
 }
 
+/**
+ * Rate limit dùng sliding-window với TTL riêng từng IP.
+ * Prune các IP không hoạt động thay vì hits.clear() toàn bộ —
+ * clear() toàn bộ cho phép kẻ tấn công reset giới hạn của mọi IP cùng lúc.
+ */
 function isRateLimited(ip: string): boolean {
   const now = Date.now();
   const recent = (hits.get(ip) ?? []).filter(t => now - t < WINDOW_MS);
   recent.push(now);
   hits.set(ip, recent);
-  if (hits.size > 5000) hits.clear();
+
+  if (hits.size > 5000) {
+    for (const [key, times] of hits.entries()) {
+      if (times.length === 0 || now - times[times.length - 1] > WINDOW_MS) {
+        hits.delete(key);
+      }
+    }
+  }
+
   return recent.length > MAX_REQUESTS_PER_WINDOW;
 }
 
@@ -53,9 +66,17 @@ export default async function handler(req: Request): Promise<Response> {
     return json(500, { error: 'Máy chủ chưa cấu hình GEMINI_API_KEY.' });
   }
 
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown';
+  const ip = req.headers.get('x-real-ip')
+    || req.headers.get('x-forwarded-for')?.split(',').pop()?.trim()
+    || 'unknown';
   if (isRateLimited(ip)) {
     return json(429, { error: 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau một phút.' });
+  }
+
+  // Kiểm tra Content-Length TRƯỚC khi đọc body để tránh DoS bộ nhớ
+  const contentLength = Number(req.headers.get('content-length') ?? 0);
+  if (contentLength > MAX_BODY_BYTES) {
+    return json(413, { error: 'Dữ liệu gửi lên quá lớn.' });
   }
 
   const rawBody = await req.text();

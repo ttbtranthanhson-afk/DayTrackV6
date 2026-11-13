@@ -8,11 +8,46 @@ export interface UserData {
   habits?: string;
   goals?: string;
   createdAt?: string;
+  isDeveloper?: boolean;
 }
 
 const ACCOUNTS_STORAGE_KEY = 'daytrack_accounts';
 const CURRENT_USER_STORAGE_KEY = 'daytrack_user_data';
 const LAST_EMAIL_STORAGE_KEY = 'daytrack_last_email';
+const DEV_ACCOUNTS_SEEDED_KEY = 'daytrack_dev_seeded';
+
+// Tài khoản nhà phát triển — được seed tự động khi app khởi động lần đầu
+const DEV_ACCOUNTS: UserData[] = [
+  {
+    name: 'Lương Hà Quân',
+    email: 'luonghaquan0106@gmail.com',
+    password: 'nhaphattrien123',
+    job: 'Nhà phát triển',
+    isDeveloper: true,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    name: 'Trần Thanh Sơn',
+    email: 'ttbtranthanhson@gmail.com',
+    password: 'nhaphattrien123',
+    job: 'Nhà phát triển',
+    isDeveloper: true,
+    createdAt: new Date().toISOString(),
+  },
+];
+
+/** Seed tài khoản developer vào localStorage nếu chưa có. */
+export function seedDevAccounts(): void {
+  try {
+    // Luôn đảm bảo các tài khoản dev có flag isDeveloper đúng
+    for (const acc of DEV_ACCOUNTS) {
+      saveAccount(acc);
+    }
+    localStorage.setItem(DEV_ACCOUNTS_SEEDED_KEY, '1');
+  } catch {
+    // ignore storage error
+  }
+}
 
 export function getStoredAccounts(): UserData[] {
   try {
@@ -27,6 +62,11 @@ export function getStoredAccounts(): UserData[] {
     // ignore parse error
   }
   return [];
+}
+
+/** Trả về tài khoản hiển thị trên UI — ẩn tài khoản nhà phát triển. */
+export function getVisibleAccounts(): UserData[] {
+  return getStoredAccounts().filter(a => !a.isDeveloper);
 }
 
 export function saveAccount(account: UserData): void {

@@ -7,7 +7,6 @@ import {
   type UserData,
   authenticate,
   saveAccount,
-  getStoredAccounts,
   getLastEmail,
 } from '../hooks/accountStore';
 
@@ -82,16 +81,10 @@ export function Login({ onLogin }: LoginProps) {
   const [habits, setHabits] = useState('');
   const [goals, setGoals] = useState('');
 
-  const [savedAccounts, setSavedAccounts] = useState<UserData[]>([]);
-
   useEffect(() => {
-    const accounts = getStoredAccounts();
-    setSavedAccounts(accounts);
     const last = getLastEmail();
     if (last) {
       setLoginEmail(last);
-    } else if (accounts.length > 0) {
-      setLoginEmail(accounts[0].email);
     }
   }, []);
 
@@ -139,14 +132,6 @@ export function Login({ onLogin }: LoginProps) {
     onLogin(newAccount);
   };
 
-  const handleSelectAccount = (account: UserData) => {
-    setLoginEmail(account.email);
-    if (account.password) {
-      setLoginPassword(account.password);
-    }
-    setErrorMessage('');
-  };
-
   return (
     <div className="min-h-screen bg-white flex flex-col">
       {/* Hero section */}
@@ -158,9 +143,7 @@ export function Login({ onLogin }: LoginProps) {
 
         <div className="relative z-10 max-w-md mx-auto">
           <div className="flex items-center gap-4 mb-5">
-            <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center">
-              <Logo size={36} />
-            </div>
+            <Logo size={48} />
             <div>
               <h1 className="text-2xl font-bold text-white">DayTrack</h1>
               <p className="text-sm text-white/70 font-medium">Năng suất lành mạnh</p>
@@ -185,9 +168,8 @@ export function Login({ onLogin }: LoginProps) {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`flex-1 pb-3 text-sm font-bold transition-colors relative ${
-                activeTab === tab ? 'text-gray-900' : 'text-gray-400'
-              }`}
+              className={`flex-1 pb-3 text-sm font-bold transition-colors relative ${activeTab === tab ? 'text-gray-900' : 'text-gray-400'
+                }`}
             >
               {tab === 'login' ? 'Đăng nhập' : 'Tạo tài khoản'}
               {activeTab === tab && (
@@ -215,42 +197,6 @@ export function Login({ onLogin }: LoginProps) {
               onSubmit={handleLoginSubmit}
               className="space-y-4"
             >
-              {/* Danh sách tài khoản đã lưu trên thiết bị */}
-              {savedAccounts.length > 0 && (
-                <div className="mb-2">
-                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
-                    Tài khoản đã lưu ({savedAccounts.length})
-                  </p>
-                  <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto">
-                    {savedAccounts.map(acc => {
-                      const isChosen = loginEmail.toLowerCase() === acc.email.toLowerCase();
-                      const inits = acc.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
-                      return (
-                        <button
-                          key={acc.email}
-                          type="button"
-                          onClick={() => handleSelectAccount(acc)}
-                          className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
-                            isChosen
-                              ? 'bg-blue-50 border-blue-300 text-blue-700 shadow-sm'
-                              : 'bg-gray-50 border-gray-100 text-gray-600 hover:bg-gray-100'
-                          }`}
-                        >
-                          <div className="w-5 h-5 rounded-full bg-blue-500 text-white text-[10px] flex items-center justify-center overflow-hidden flex-shrink-0">
-                            {acc.avatar ? (
-                              <img src={acc.avatar} alt={acc.name} className="w-full h-full object-cover" />
-                            ) : (
-                              inits
-                            )}
-                          </div>
-                          <span className="truncate max-w-[120px]">{acc.name}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
               <InputField icon={Mail} label="Email" type="email" value={loginEmail}
                 onChange={v => { setLoginEmail(v); setErrorMessage(''); }} placeholder="email@cuaban.com" required />
               <InputField icon={Lock} label="Mật khẩu" type="password" value={loginPassword}

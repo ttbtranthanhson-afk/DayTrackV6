@@ -42,9 +42,7 @@ export function About() {
           >
             <div className="absolute -top-8 -right-8 w-32 h-32 bg-white/10 rounded-full" />
             <div className="relative z-10">
-              <div className="w-20 h-20 mx-auto mb-4 bg-white/20 rounded-2xl flex items-center justify-center">
-                <Logo size={48} />
-              </div>
+              <Logo size={56} className="mx-auto mb-4" />
               <h2 className="text-2xl font-bold">DayTrack</h2>
               <p className="text-white/80 mt-1 font-medium italic">"Xây dựng ngày hoàn hảo của bạn."</p>
             </div>

@@ -1,23 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router';
 import { Toaster } from 'sonner';
 import { useNotificationScheduler } from './hooks/useNotificationScheduler';
 import { useAppTheme } from './hooks/useAppTheme';
 import { BottomNav } from './components/BottomNav';
 import { useIsDesktop } from './desktop/useIsDesktop';
-import { DesktopApp } from './desktop/DesktopApp';
-import { DesktopLogin } from './desktop/DesktopLogin';
-import { Timetable } from './pages/Timetable';
-import { Calendar } from './pages/Calendar';
-import { Tasks } from './pages/Tasks';
-import { Focus } from './pages/Focus';
-import { Achive } from './pages/Achive';
-import { Login } from './pages/Login';
-import { Settings } from './pages/Settings';
-import { Profile } from './pages/Profile';
-import { Notifications } from './pages/Notifications';
-import { Appearance } from './pages/Appearance';
-import { About } from './pages/About';
 import { achievementGroupsData } from './data/achievements';
 import { syncAchievementsWithTasks } from './hooks/achievementStore';
 import { days, type ScheduleTask } from './hooks/scheduleData';
@@ -28,6 +15,34 @@ import {
   saveAccount,
   updateAccount,
 } from './hooks/accountStore';
+
+// ── Lazy-loaded pages — mỗi route là 1 chunk riêng ──
+// Giảm bundle lần đầu từ 1 chunk lớn → chỉ load page đang dùng
+const Timetable = lazy(() => import('./pages/Timetable').then(m => ({ default: m.Timetable })));
+const Calendar = lazy(() => import('./pages/Calendar').then(m => ({ default: m.Calendar })));
+const Tasks = lazy(() => import('./pages/Tasks').then(m => ({ default: m.Tasks })));
+const Focus = lazy(() => import('./pages/Focus').then(m => ({ default: m.Focus })));
+const Achive = lazy(() => import('./pages/Achive').then(m => ({ default: m.Achive })));
+const Login = lazy(() => import('./pages/Login').then(m => ({ default: m.Login })));
+const Settings = lazy(() => import('./pages/Settings').then(m => ({ default: m.Settings })));
+const Profile = lazy(() => import('./pages/Profile').then(m => ({ default: m.Profile })));
+const Notifications = lazy(() => import('./pages/Notifications').then(m => ({ default: m.Notifications })));
+const Appearance = lazy(() => import('./pages/Appearance').then(m => ({ default: m.Appearance })));
+const About = lazy(() => import('./pages/About').then(m => ({ default: m.About })));
+const DevFeedbackPanel = lazy(() => import('./pages/DevFeedbackPanel').then(m => ({ default: m.DevFeedbackPanel })));
+
+// Desktop layouts — chunk riêng, chỉ tải trên màn hình lớn
+const DesktopApp = lazy(() => import('./desktop/DesktopApp').then(m => ({ default: m.DesktopApp })));
+const DesktopLogin = lazy(() => import('./desktop/DesktopLogin').then(m => ({ default: m.DesktopLogin })));
+
+// Fallback hiển thị khi đang lazy-load
+function PageLoader() {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="w-6 h-6 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+}
 
 export type { UserData };
 
@@ -63,9 +78,15 @@ function AppContent() {
       setIsLoggedIn(true);
     }
 
-    const savedTasks = localStorage.getItem('daytrack_tasks');
-    if (savedTasks) {
-      setGlobalTasks(JSON.parse(savedTasks));
+    try {
+      const savedTasks = localStorage.getItem('daytrack_tasks');
+      if (savedTasks) {
+        const parsed = JSON.parse(savedTasks);
+        if (Array.isArray(parsed)) setGlobalTasks(parsed);
+      }
+    } catch {
+      // Dữ liệu hỏng — xóa và dùng mảng rỗng để tránh màn hình trắng
+      localStorage.removeItem('daytrack_tasks');
     }
   }, []);
 
@@ -127,22 +148,28 @@ function AppContent() {
   const showBottomNav = isLoggedIn;
 
   if (!isLoggedIn) {
-    return isDesktop
-      ? <DesktopLogin onLogin={handleLogin} />
-      : <Login onLogin={handleLogin} />;
+    return (
+      <Suspense fallback={<PageLoader />}>
+        {isDesktop
+          ? <DesktopLogin onLogin={handleLogin} />
+          : <Login onLogin={handleLogin} />}
+      </Suspense>
+    );
   }
 
   if (isDesktop) {
     return (
       <div className="size-full">
-        <DesktopApp
-          userData={userData}
-          onLogout={handleLogout}
-          onUpdateUserData={handleUpdateUserData}
-          tasks={globalTasks}
-          onUpdateTasks={handleUpdateTasks}
-          onAddTasks={handleAddTasksFromSchedule}
-        />
+        <Suspense fallback={<PageLoader />}>
+          <DesktopApp
+            userData={userData}
+            onLogout={handleLogout}
+            onUpdateUserData={handleUpdateUserData}
+            tasks={globalTasks}
+            onUpdateTasks={handleUpdateTasks}
+            onAddTasks={handleAddTasksFromSchedule}
+          />
+        </Suspense>
         <Toaster position="top-center" richColors />
       </div>
     );
@@ -150,19 +177,22 @@ function AppContent() {
 
   return (
     <div className="size-full">
-      <Routes>
-        <Route path="/" element={<Navigate to="/timetable" replace />} />
-        <Route path="/timetable" element={<Timetable onAddTasks={handleAddTasksFromSchedule} />} />
-        <Route path="/calendar" element={<Calendar onAddTasks={handleAddTasksFromSchedule} />} />
-        <Route path="/tasks" element={<Tasks tasks={globalTasks} onUpdateTasks={handleUpdateTasks} />} />
-        <Route path="/focus" element={<Focus />} />
-        <Route path="/achive" element={<Achive />} />
-        <Route path="/settings" element={<Settings userData={userData} onLogout={handleLogout} onUpdateUserData={handleUpdateUserData} />} />
-        <Route path="/profile" element={<Profile userData={userData} achievements={achievementGroupsData} onUpdateUserData={handleUpdateUserData} />} />
-        <Route path="/notifications" element={<Notifications />} />
-        <Route path="/appearance" element={<Appearance />} />
-        <Route path="/about" element={<About />} />
-      </Routes>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route path="/" element={<Navigate to="/timetable" replace />} />
+          <Route path="/timetable" element={<Timetable onAddTasks={handleAddTasksFromSchedule} />} />
+          <Route path="/calendar" element={<Calendar onAddTasks={handleAddTasksFromSchedule} />} />
+          <Route path="/tasks" element={<Tasks tasks={globalTasks} onUpdateTasks={handleUpdateTasks} />} />
+          <Route path="/focus" element={<Focus />} />
+          <Route path="/achive" element={<Achive />} />
+          <Route path="/settings" element={<Settings userData={userData} onLogout={handleLogout} onUpdateUserData={handleUpdateUserData} />} />
+          <Route path="/profile" element={<Profile userData={userData} achievements={achievementGroupsData} onUpdateUserData={handleUpdateUserData} />} />
+          <Route path="/notifications" element={<Notifications />} />
+          <Route path="/appearance" element={<Appearance />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/dev/feedbacks" element={<DevFeedbackPanel />} />
+        </Routes>
+      </Suspense>
       {showBottomNav && <BottomNav />}
       <Toaster position="top-center" richColors />
     </div>

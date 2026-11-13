@@ -7,7 +7,6 @@ import {
   type UserData,
   authenticate,
   saveAccount,
-  getStoredAccounts,
   getLastEmail,
 } from '../hooks/accountStore';
 
@@ -72,19 +71,10 @@ export function DesktopLogin({ onLogin }: DesktopLoginProps) {
   const [habits, setHabits] = useState('');
   const [goals, setGoals] = useState('');
 
-  const [savedAccounts, setSavedAccounts] = useState<UserData[]>([]);
-
   useEffect(() => {
-    const accounts = getStoredAccounts();
-    setSavedAccounts(accounts);
     const last = getLastEmail();
-    if (last) {
-      setLoginEmail(last);
-    } else if (accounts.length > 0) {
-      setLoginEmail(accounts[0].email);
-    }
+    if (last) setLoginEmail(last);
   }, []);
-
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
@@ -129,14 +119,6 @@ export function DesktopLogin({ onLogin }: DesktopLoginProps) {
     onLogin(newAccount);
   };
 
-  const handleSelectAccount = (account: UserData) => {
-    setLoginEmail(account.email);
-    if (account.password) {
-      setLoginPassword(account.password);
-    }
-    setErrorMessage('');
-  };
-
   return (
     <div className="desktop-ui min-h-screen w-full flex bg-white">
       {/* Brand panel */}
@@ -144,9 +126,7 @@ export function DesktopLogin({ onLogin }: DesktopLoginProps) {
         <div className="absolute -top-16 -right-16 w-72 h-72 bg-white/10 rounded-full" />
         <div className="absolute bottom-0 -left-20 w-80 h-80 bg-white/10 rounded-full" />
         <div className="relative z-10 flex items-center gap-4">
-          <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center">
-            <Logo size={36} />
-          </div>
+          <Logo size={48} />
           <div>
             <h1 className="text-2xl font-bold text-white">DayTrack</h1>
             <p className="text-sm text-white/70 font-medium">Năng suất lành mạnh</p>
@@ -167,9 +147,7 @@ export function DesktopLogin({ onLogin }: DesktopLoginProps) {
       <div className="flex-1 flex items-center justify-center px-8 py-12 overflow-y-auto">
         <div className="w-full max-w-md">
           <div className="lg:hidden flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-400 rounded-2xl flex items-center justify-center">
-              <Logo size={30} />
-            </div>
+            <Logo size={40} />
             <h1 className="text-xl font-bold text-gray-900">DayTrack</h1>
           </div>
 
@@ -185,9 +163,8 @@ export function DesktopLogin({ onLogin }: DesktopLoginProps) {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`flex-1 pb-3 text-sm font-bold transition-colors relative ${
-                  activeTab === tab ? 'text-gray-900' : 'text-gray-400'
-                }`}
+                className={`flex-1 pb-3 text-sm font-bold transition-colors relative ${activeTab === tab ? 'text-gray-900' : 'text-gray-400'
+                  }`}
               >
                 {tab === 'login' ? 'Đăng nhập' : 'Tạo tài khoản'}
                 {activeTab === tab && (
@@ -215,41 +192,6 @@ export function DesktopLogin({ onLogin }: DesktopLoginProps) {
                 onSubmit={handleLoginSubmit}
                 className="space-y-4"
               >
-                {savedAccounts.length > 0 && (
-                  <div className="mb-3">
-                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
-                      Tài khoản đã lưu ({savedAccounts.length})
-                    </p>
-                    <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
-                      {savedAccounts.map(acc => {
-                        const isChosen = loginEmail.toLowerCase() === acc.email.toLowerCase();
-                        const inits = acc.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
-                        return (
-                          <button
-                            key={acc.email}
-                            type="button"
-                            onClick={() => handleSelectAccount(acc)}
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded-2xl text-xs font-semibold border transition-all ${
-                              isChosen
-                                ? 'bg-blue-50 border-blue-300 text-blue-700 shadow-sm'
-                                : 'bg-gray-50 border-gray-100 text-gray-600 hover:bg-gray-100'
-                            }`}
-                          >
-                            <div className="w-6 h-6 rounded-full bg-blue-500 text-white text-[10px] flex items-center justify-center overflow-hidden flex-shrink-0">
-                              {acc.avatar ? (
-                                <img src={acc.avatar} alt={acc.name} className="w-full h-full object-cover" />
-                              ) : (
-                                inits
-                              )}
-                            </div>
-                            <span className="truncate max-w-[130px]">{acc.name}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
                 <Field icon={Mail} label="Email" type="email" value={loginEmail} onChange={v => { setLoginEmail(v); setErrorMessage(''); }} placeholder="email@cuaban.com" required />
                 <Field icon={Lock} label="Mật khẩu" type="password" value={loginPassword} onChange={v => { setLoginPassword(v); setErrorMessage(''); }} placeholder="Nhập mật khẩu" required />
                 <div className="flex justify-end">

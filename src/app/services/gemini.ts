@@ -21,7 +21,18 @@ import {
 const CLIENT_KEY = (import.meta.env.VITE_GEMINI_API_KEY ?? '').trim();
 const MODEL = (import.meta.env.VITE_GEMINI_MODEL ?? '').trim() || 'gemini-2.5-flash';
 const GOOGLE_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models';
-const PROXY_PATH = '/api/ai';
+const PROXY_PATH = import.meta.env.VITE_API_BASE_URL
+  ? `${import.meta.env.VITE_API_BASE_URL}/api/ai`
+  : '/api/ai';
+
+// Bảo vệ: không cho phép key client trên môi trường production
+// Key trong bundle JS tĩnh có thể bị bất kỳ ai lấy khi decompile.
+if (import.meta.env.PROD && CLIENT_KEY) {
+  console.warn(
+    '[DayTrack] VITE_GEMINI_API_KEY được set trên production build. ' +
+    'Key sẽ bị lộ trong bundle JS. Hãy dùng VITE_API_BASE_URL để gọi qua proxy.'
+  );
+}
 
 export class GeminiError extends Error {
   constructor(message: string) {
